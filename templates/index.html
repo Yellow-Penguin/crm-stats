@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Звіт</title>
+    <style>
+        table {
+            width: auto;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        #date-fields {
+            display: {% if date_choice == "custom" %}block{% else %}none{% endif %};
+        }
+    </style>
+    <script>
+        function toggleDateFields() {
+            var dateFields = document.getElementById("date-fields");
+            var selectBox = document.getElementById("date-choice");
+            dateFields.style.display = (selectBox.value === "custom") ? "block" : "none";
+        }
+
+        function updateReport() {
+            fetch('/update_reports', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                let tableBody = document.querySelector("#report-table tbody");
+                tableBody.innerHTML = "";
+                data.forEach(row => {
+                    let tr = document.createElement("tr");
+                    tr.innerHTML = `<td>${row[0]}</td><td>${row[1]}</td>`;
+                    tableBody.appendChild(tr);
+                });
+                alert("База даних оновлена!");
+            })
+            .catch(error => console.error("Помилка:", error));
+        }
+    </script>
+</head>
+<body>
+    <h1>Звіт</h1>
+
+    <form method="POST">
+        <label for="date-choice">Оберіть період:</label>
+        <select id="date-choice" name="date-choice" onchange="toggleDateFields()">
+            <option value="current" {% if date_choice == "current" %}selected{% endif %}>Поточний місяць</option>
+            <option value="custom" {% if date_choice == "custom" %}selected{% endif %}>Свій проміжок</option>
+        </select>
+
+        <div id="date-fields">
+            <label for="start_date">Початкова дата:</label>
+            <input type="date" id="start_date" name="start_date" value="{{ start_date or '' }}">
+
+            <label for="end_date">Кінцева дата:</label>
+            <input type="date" id="end_date" name="end_date" value="{{ end_date or '' }}">
+        </div>
+
+        <button type="submit">Оновити звіт</button>
+    </form>
+
+    <h2>Результати</h2>
+    <table id="report-table">
+        <thead>
+            <tr>
+                <th>Інженер</th>
+                <th>Загальний час (хв)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in reports %}
+            <tr>
+                <td>{{ row[0] }}</td>
+                <td>{{ row[1] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <button onclick="updateReport()">Підгрузити звіт</button>
+
+</body>
+</html>
