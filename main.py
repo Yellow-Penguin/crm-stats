@@ -4,7 +4,7 @@ from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
 from modules import crm_api
 from modules.upload_works import upload_works
-
+from modules.upload_works_list import upload_work_list
 app = Flask(__name__)
 
 # Get login info from env
@@ -64,14 +64,26 @@ def home():
 @app.route("/update_reports", methods=["POST"])
 def update_reports():
     """Оновлення бази даних і повернення оновлених даних"""
-    crm_api.download_report(driver)
-    res = upload_works()
-    if res != 0:
-        print("Error in upload_works")
+    action_type = request.get_json().get("action")
+    print(action_type)
+    if action_type == "report":
+        crm_api.download_report(driver)
+        res = upload_works()
+        if res != 0:
+            print("Error in upload_works")
+    else:
+        crm_api.download_work_list(driver)
+        res = upload_work_list()
+        if res != 0:
+            print("Error in upload_work_list")
     updated_reports = get_reports()
     return jsonify(updated_reports)
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+
+    app.run(
+        debug=True, passthrough_errors=True,
+        use_debugger=True, use_reloader=False
+    )
 
