@@ -3,10 +3,9 @@ import pandas as pd
 from datetime import date
 from pathlib import Path
 
-# TODO: FIX PATH`S
-report_path = Path.cwd() / "downloads"
-report = report_path.joinpath("Report" + date.today().strftime("-%m-%Y") + ".xls")
-#report = report_path.joinpath("Report-02-2025.xls")
+download_path = Path.cwd() / "downloads"
+report = download_path.joinpath("Report" + date.today().strftime("-%m-%Y") + ".xls")
+work_list = download_path.joinpath("works_list.xls")
 
 def upload_works():
     # Open Excel report
@@ -55,7 +54,6 @@ def upload_works():
                 )
         # Delete from db works which not in excel report
         # (In case if someone deleted work in CRM, which was added to db)
-        # TODO: change dates automatically
         cursor.execute("""
                 DELETE FROM Reports
                 WHERE strftime('%Y-%m', Date) = strftime('%Y-%m', 'now')
@@ -76,3 +74,67 @@ def upload_works():
         conn.close()
 
     return 0
+
+def upload_work_list():
+    # Delete all works that not in "Drones" category
+    df = pd.read_excel(work_list)
+    df = df[df["Category"] == "Дрони"]
+    df = df[["Name", "Duration (minutes)"]]
+
+    #df.to_excel("works_list_test.xlsx")
+
+    # Open database
+    conn = sqlite3.connect('../works.db', timeout=10)
+    cursor = conn.cursor()
+    # Table of works and time
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS Works (
+        Name TEXT PRIMARY KEY,
+        Time INTEGER NOT NULL,
+        UNIQUE(Name)
+    )""")
+
+    try:
+        for i, row in df.iterrows():
+            cursor.execute("""
+                INSERT OR REPLACE INTO Works (Name, Time) VALUES (?, ?)
+            """,(row['Name'], row['Duration (minutes)']))
+    except Exception as e:
+        print('Error in upload_works_list:\n', e)
+        return -1
+    finally:
+        conn.commit()
+        conn.close()
+    return 0
+
+def get_reports(start_date=None, end_date=None):
+    conn = sqlite3.connect("works.db")
+    cursor = conn.cursor()
+    print(f'Start date: {start_date}, End date: {end_date}')
+    if start_date and end_date:
+        cursor.execute("""
+            SELECT Engineer, ROUND(SUM(Multiplier * Works.Time), 3) 
+            FROM Reports 
+            JOIN Works ON Reports.Work = Works.Name
+            WHERE Date BETWEEN ? AND ?
+            GROUP BY Engineer
+        """, (start_date, end_date))
+    else:
+        cursor.execute("""
+            SELECT Engineer, SUM(Multiplier * Works.Time) 
+            FROM Reports 
+            JOIN Works ON Reports.Work = Works.Name
+            WHERE strftime('%Y-%m', Date) = strftime('%Y-%m', 'now')  
+            GROUP BY Engineer
+        """)
+
+    data = cursor.fetchall()
+    conn.close()
+    return data
+
+def get_last_work():
+    conn = sqlite3.connect("works.db")
+    cursor = conn.cursor()
+    cursor.execute("""SELECT MAX(DATE) FROM REPORTS""")
+    data = cursor.fetchone()[0]
+    return data
