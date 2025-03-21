@@ -4,21 +4,139 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Звіт</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
-        table {
-            width: auto;
-            border-collapse: collapse;
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: #f4f7fc;
+            color: #333;
+            text-align: center;
+            padding: 20px;
         }
-        th, td {
-            border: 1px solid black;
-            padding: 8px;
+
+        h1, h2 {
+            color: #2c3e50;
+        }
+
+        form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            display: inline-block;
             text-align: left;
+            margin-bottom: 20px;
         }
+
+        select, input, button {
+            margin: 10px 0;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        select, input {
+            width: 100%;
+        }
+
+        button {
+            background: #3498db;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+            width: 100%;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+        }
+
         th {
-            background-color: #f2f2f2;
+            background: #2c3e50;
+            color: white;
         }
+
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+
         #date-fields {
             display: {% if date_choice == "custom" %}block{% else %}none{% endif %};
+        }
+
+        .btn-group {
+            margin-top: 15px;
+        }
+
+        .btn-group button {
+            width: 45%;
+            display: inline-block;
+            margin: 5px;
+        }
+
+        .loader {
+            display: none;
+            margin: 10px auto;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            border-radius: 5px;
+            padding: 15px;
+            position: fixed;
+            left: 50%;
+            bottom: 20px;
+            transform: translateX(-50%);
+            font-size: 16px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.5s, bottom 0.5s;
+        }
+
+        .toast.show {
+            visibility: visible;
+            opacity: 1;
+            bottom: 40px;
+        }
+
+        .toast.error {
+            background-color: #e74c3c;
         }
     </style>
     <script>
@@ -27,30 +145,10 @@
             var selectBox = document.getElementById("date-choice");
             dateFields.style.display = (selectBox.value === "custom") ? "block" : "none";
         }
-
-        function updateReport() {
-            fetch('/update_reports', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            })
-            .then(response => response.json())
-            .then(data => {
-                let tableBody = document.querySelector("#report-table tbody");
-                tableBody.innerHTML = "";
-                data.forEach(row => {
-                    let tr = document.createElement("tr");
-                    tr.innerHTML = `<td>${row[0]}</td><td>${row[1]}</td>`;
-                    tableBody.appendChild(tr);
-                });
-                alert("База даних оновлена!");
-            })
-            .catch(error => console.error("Помилка:", error));
-        }
-
-
     </script>
 </head>
 <body>
+
     <h1>Звіт</h1>
 
     <form method="POST">
@@ -72,6 +170,8 @@
     </form>
 
     <h2>Результати</h2>
+    <span>Дата останньої роботи: {{ last_work_date }}</span>
+
     <table id="report-table">
         <thead>
             <tr>
@@ -89,7 +189,79 @@
         </tbody>
     </table>
 
-    <button id="update-reports">Підгрузити звіт</button>
-    <button id="update-work-list">Оновити роботи</button>
+    <div class="btn-group">
+        <button id="update-reports">Підгрузити звіт</button>
+        <button id="update-work-list">Оновити роботи</button>
+    </div>
+
+    <div id="loader" class="loader"></div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        function showToast(message, isError = false) {
+            let toast = document.getElementById("toast");
+            toast.innerText = message;
+            toast.className = "toast show" + (isError ? " error" : "");
+
+            setTimeout(() => {
+                toast.className = "toast";
+            }, 3000);
+        }
+
+        function updateReport(buttonType) {
+            let button = (buttonType === "report" ? document.getElementById("update-reports") : document.getElementById("update-work-list"));
+            let loader = document.getElementById("loader");
+
+            button.disabled = true;
+            loader.style.display = "block";
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => {
+                controller.abort();
+            }, 60000);
+
+            fetch('/update_reports', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: buttonType }),
+                signal: controller.signal
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Server Error!");
+                }
+                return response.json();
+            })
+            .then(data => {
+                let tableBody = document.querySelector("#report-table tbody");
+                tableBody.innerHTML = "";
+                data.forEach(row => {
+                    let tr = document.createElement("tr");
+                    tr.innerHTML = `<td>${row[0]}</td><td>${row[1]}</td>`;
+                    tableBody.appendChild(tr);
+                });
+
+                showToast("Дані успішно оновлено!");
+            })
+            .catch(error => {
+                if (error.name === "AbortError") {
+                    showToast("Час очікування відповіді від сервера перевищено!", true);
+                } else {
+                    console.error("Error:", error);
+                    showToast("Сталася помилка при оновленні.", true);
+                }
+            })
+            .finally(() => {
+                clearTimeout(timeoutId);
+                button.disabled = false;
+                loader.style.display = "none";
+            });
+        }
+
+        document.getElementById("update-reports").onclick = function() { updateReport("report") };
+        document.getElementById("update-work-list").onclick = function() { updateReport("work-list") };
+
+    </script>
 </body>
 </html>
