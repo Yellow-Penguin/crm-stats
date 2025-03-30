@@ -84,7 +84,7 @@ def upload_work_list():
     #df.to_excel("works_list_test.xlsx")
 
     # Open database
-    conn = sqlite3.connect('../works.db', timeout=10)
+    conn = sqlite3.connect('works.db', timeout=10)
     cursor = conn.cursor()
     # Table of works and time
     cursor.execute("""
@@ -121,7 +121,7 @@ def get_reports(start_date=None, end_date=None):
         """, (start_date, end_date))
     else:
         cursor.execute("""
-            SELECT Engineer, SUM(Multiplier * Works.Time) 
+            SELECT Engineer, ROUND(SUM(Multiplier * Works.Time), 3) 
             FROM Reports 
             JOIN Works ON Reports.Work = Works.Name
             WHERE strftime('%Y-%m', Date) = strftime('%Y-%m', 'now')  

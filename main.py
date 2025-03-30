@@ -1,5 +1,6 @@
 import hashlib
 import os
+from waitress import serve
 from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
 from modules import crm_api
@@ -20,6 +21,7 @@ def home():
     start_date = end_date = None
     date_choice = "current"
     last_work_date = dbf.get_last_work()
+    print(last_work_date)
 
     if request.method == "POST":
         date_choice = request.form["date-choice"]
@@ -50,6 +52,7 @@ def update_reports():
         if res != 0:
             print("Error in upload_work_list")
     updated_reports = dbf.get_reports()
+    last_work_date = dbf.get_last_work()
     return jsonify(updated_reports)
 
 # TODO: Login
@@ -68,9 +71,5 @@ def admin_functions():
 
 
 if __name__ == "__main__":
-
-    app.run(
-        debug=True, passthrough_errors=True,
-        use_debugger=True, use_reloader=True
-    )
+    serve(app, host="0.0.0.0", port=8080)
 
