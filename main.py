@@ -5,7 +5,7 @@ from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
 from modules import crm_api
 from modules import db_functions as dbf
-from modules.log_config import logger
+#from modules.log_config import logger
 app = Flask(__name__)
 
 # Get login info from env
@@ -16,14 +16,14 @@ admin_passwd = os.getenv("ADMIN_PASSWORD")
 
 driver = crm_api.start_and_login(username, passwd)
 
-@app.before_request
+""""@app.before_request
 def log_request():
-    logger.info(f"Request: {request.method} {request.url} from {request.remote_addr}")
+    logger.info(f"Request: {request.method} {request.url} from {request.remote_addr}")"""
 
-@app.errorhandler(500)
+"""@app.errorhandler(500)
 def handle_500(error):
     logger.error(f"Error 500: {error}, URL: {request.url}")
-    return "Server Error", 500
+    return "Server Error", 500"""
 @app.route("/", methods=["GET", "POST"])
 def home():
     reports = []

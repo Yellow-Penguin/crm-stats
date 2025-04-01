@@ -5,7 +5,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from log_config import logger
+#from log_config import logger
 
 report_path = Path.cwd() / "downloads"
 
@@ -24,9 +24,9 @@ def start_and_login(username, passwd):
         wait.until(EC.presence_of_element_located((By.ID, "password"))).send_keys(passwd)
         wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".PsVN1"))).click()
         wait.until(EC.url_changes(driver.current_url))
-        logger.info("CRM LOGIN SUCCESS")
+        #logger.info("CRM LOGIN SUCCESS")
     except Exception as e:
-        logger.error(f'CRM LOGIN FAILED due to {e}')
+        #logger.error(f'CRM LOGIN FAILED due to {e}')
         return -2
     finally:
         return driver
@@ -40,7 +40,7 @@ def download_report(driver):
         wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".mi3FM.Sbo0b.RKBw5.pnoBQ.z0cnO"))).click()
         wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".wFyif"))).click()
     except Exception as e:
-        logger.error(f'CRM REPORT DOWNLOAD FAILED due to {e}:')
+        #logger.error(f'CRM REPORT DOWNLOAD FAILED due to {e}:')
         return -2
     finally:
         # Rename downloaded report to format "Report-month-year"
@@ -51,7 +51,7 @@ def download_report(driver):
         if new_report.exists():
             new_report.unlink()
         report.rename(new_report)
-        logger.info("CRM REPORT DOWNLOAD SUCCESSFUL")
+        #logger.info("CRM REPORT DOWNLOAD SUCCESSFUL")
         # Close browser
         #driver.quit()
         return driver
@@ -65,7 +65,7 @@ def download_work_list(driver):
         #wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "//div[contains(@class, 'NHCVN')]//span[text()='Дрони']"))).move_to_element().click()
         wait.until(EC.element_to_be_clickable((By.XPATH, "//button[div[contains(text(), 'Export')]]"))).click()
     except Exception as e:
-        logger.error(f'CRM WORKS LIST DOWNLOAD FAILED due to {e}:')
+        #logger.error(f'CRM WORKS LIST DOWNLOAD FAILED due to {e}:')
         return -2
     finally:
         work_list = report_path.joinpath("Labors and Services.xls")
@@ -75,7 +75,7 @@ def download_work_list(driver):
         if new_work_list.exists():
             new_work_list.unlink()
         work_list.rename(new_work_list)
-        logger.info("CRM WORKS LIST DOWNLOAD SUCCESSFUL")
+        #logger.info("CRM WORKS LIST DOWNLOAD SUCCESSFUL")
         # Close browser
         #driver.quit()
         return driver

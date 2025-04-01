@@ -4,7 +4,7 @@ import sqlite3
 import pandas as pd
 from datetime import date
 from pathlib import Path
-from log_config import logger
+#from log_config import logger
 
 download_path = Path.cwd() / "downloads"
 report = download_path.joinpath("Report" + date.today().strftime("-%m-%Y") + ".xls")
@@ -71,10 +71,10 @@ def upload_works():
                 SELECT Date, Engineer, OrderId, Work, Multiplier, Price FROM temp_reports;
             """)
     except Exception as e:
-        logger.error(f"Loading Works to db failed: {e}")
+        #logger.error(f"Loading Works to db failed: {e}")
         return -1
     finally:
-        logger.info("Loading Works to db finished")
+        #logger.info("Loading Works to db finished")
         conn.commit()
         conn.close()
     return 0
@@ -104,10 +104,10 @@ def upload_work_list():
                 INSERT OR REPLACE INTO Works (Name, Time) VALUES (?, ?)
             """,(row['Name'], row['Duration (minutes)']))
     except Exception as e:
-        logger.error(f"Loading Works List to db failed: {e}")
+        #logger.error(f"Loading Works List to db failed: {e}")
         return -1
     finally:
-        logger.info("Loading Works List to db finished")
+        #logger.info("Loading Works List to db finished")
         conn.commit()
         conn.close()
     return 0
@@ -135,10 +135,10 @@ def get_reports(start_date=None, end_date=None):
                 GROUP BY Engineer
             """)
     except Exception as e:
-        logger.error(f"Failed to retrieve statistics from the database: {e}")
+        #logger.error(f"Failed to retrieve statistics from the database: {e}")
         return -1
     finally:
-        logger.info(f"Retrieving statistics from the database, start date - {start_date} and end date - {end_date}")
+        #logger.info(f"Retrieving statistics from the database, start date - {start_date} and end date - {end_date}")
         data = cursor.fetchall()
         conn.close()
         return data
@@ -149,9 +149,9 @@ def get_last_work():
     try:
         cursor.execute("""SELECT MAX(DATE) FROM REPORTS""")
     except Exception as e:
-        logger.error(f"Unsuccessful obtaining of the last work date: {e}")
+        #logger.error(f"Unsuccessful obtaining of the last work date: {e}")
         return -1
     finally:
         data = cursor.fetchone()[0]
-        logger.info(f"Last work date retrieved - {data}")
+        #logger.info(f"Last work date retrieved - {data}")
         return data
