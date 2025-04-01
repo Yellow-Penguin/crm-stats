@@ -1,3 +1,4 @@
+from datetime import datetime
 import sqlite3
 import pandas as pd
 from datetime import date
@@ -113,13 +114,15 @@ def get_reports(start_date=None, end_date=None):
     cursor = conn.cursor()
     print(f'Start date: {start_date}, End date: {end_date}')
     if start_date and end_date:
+        start_datetime = datetime.strptime(start_date, '%Y-%m-%d')
+        end_datetime = datetime.strptime(end_date, '%Y-%m-%d').replace(hour=23, minute=59, second=59)
         cursor.execute("""
             SELECT Engineer, ROUND(SUM(Multiplier * Works.Time), 3) 
             FROM Reports 
             JOIN Works ON Reports.Work = Works.Name
             WHERE Date BETWEEN ? AND ?
             GROUP BY Engineer
-        """, (start_date, end_date))
+        """, (start_datetime, end_datetime))
     else:
         cursor.execute("""
             SELECT Engineer, ROUND(SUM(Multiplier * Works.Time), 3) 
