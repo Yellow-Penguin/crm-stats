@@ -1,9 +1,13 @@
 .env
 .idea
 .venv
+
 notes
 downloads
 Labors and Services.xls
 test.py
 works.db
+
 chromedriver-win64
+__pycache__
+modules/__pycache
