@@ -24,7 +24,8 @@ def upload_works():
             Multiplier REAL NOT NULL,
             Price INTEGER,
             FOREIGN KEY(Work) REFERENCES Works(Name),
-            UNIQUE(Date, Engineer, OrderId, Work)
+            UNIQUE(Date, Engineer, OrderId, Work),
+            ORDER BY Date DESC;
         )
     """)
 
