@@ -30,7 +30,6 @@ def home():
     start_date = end_date = None
     date_choice = "current"
     last_work_date = dbf.get_last_work()
-    print(last_work_date)
 
     if request.method == "POST":
         date_choice = request.form["date-choice"]
@@ -49,17 +48,12 @@ def home():
 @app.route("/update_reports", methods=["POST"])
 def update_reports():
     action_type = request.get_json().get("action")
-    print(f'Action type: {action_type}')
     if action_type == "report":
         crm_api.download_report(driver)
         res = dbf.upload_works()
-        if res != 0:
-            print("Error in upload_works")
     elif action_type == "work-list":
         crm_api.download_work_list(driver)
         res = dbf.upload_work_list()
-        if res != 0:
-            print("Error in upload_work_list")
     updated_reports = dbf.get_reports()
     last_work_date = dbf.get_last_work()
     return jsonify(updated_reports)
